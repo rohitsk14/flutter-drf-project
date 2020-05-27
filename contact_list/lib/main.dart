@@ -32,6 +32,8 @@ class MyHomePage extends StatefulWidget {
 class _MyHomePageState extends State<MyHomePage> {
   List<Cards> myModels;
   bool dataFetched = false;
+  bool edit = false;
+  int id;
   final TextEditingController name_cntr = TextEditingController();
   final TextEditingController no_cntr = TextEditingController();
   final _formKey = GlobalKey<FormState>();
@@ -56,7 +58,7 @@ class _MyHomePageState extends State<MyHomePage> {
           children: <Widget>[
             Text(
               'Add a contact',
-              style: GoogleFonts.lato(color: Colors.black, fontSize: 20),
+              style: GoogleFonts.aBeeZee(color: Colors.black, fontSize: 20),
             ),
             SizedBox(
               height: 10.0,
@@ -116,12 +118,14 @@ class _MyHomePageState extends State<MyHomePage> {
                     keyboardType: TextInputType.number,
                   ),
                   SizedBox(
-                    height: 10.0,
+                    height: 20.0,
                   ),
                   RaisedButton(
                     elevation: 5,
                     padding: const EdgeInsets.all(8.0),
                     textColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(18)),
                     color: Colors.orangeAccent,
                     onPressed: () {
                       if (_formKey.currentState.validate()) {
@@ -129,8 +133,11 @@ class _MyHomePageState extends State<MyHomePage> {
                         if (!currentFocus.hasPrimaryFocus) {
                           currentFocus.unfocus();
                         }
-                        createCard(name_cntr.text, no_cntr.text);
-
+                        if (edit == true) {
+                          editCard(id, name_cntr.text, no_cntr.text);
+                        } else {
+                          createCard(name_cntr.text, no_cntr.text);
+                        }
                         name_cntr.clear();
                         no_cntr.clear();
                       } else {
@@ -138,7 +145,10 @@ class _MyHomePageState extends State<MyHomePage> {
                         print(no_cntr.text.contains(RegExp(r'[0-9]')));
                       }
                     },
-                    child: Text('Add'),
+                    child: Text(
+                      'Add',
+                      style: TextStyle(fontSize: 17),
+                    ),
                   )
                 ],
               ),
@@ -153,18 +163,40 @@ class _MyHomePageState extends State<MyHomePage> {
               : ListView.builder(
                   itemCount: myModels.length,
                   itemBuilder: (context, i) {
-                    return ListTile(
-                      title: Text(myModels[i].name),
-                      subtitle: Text(myModels[i].number),
+                    return GestureDetector(
+                      onTap: () {
+                        print('tile');
+                        id = myModels[i].id;
+                        tappedTile(myModels[i].name, myModels[i].number);
+                        Backdrop.of(context).fling();
+                      },
+                      child: ListTile(
+                        title: Text(myModels[i].name),
+                        subtitle: Text(myModels[i].number),
+                        trailing: GestureDetector(
+                          child: Icon(Icons.delete),
+                          onTap: () {
+                            print('icon');
+                            deleteCard(myModels[i].id);
+                          },
+                        ),
+                      ),
                     );
                   },
                 ),
         ),
       ),
-      iconPosition: BackdropIconPosition.leading,
+      iconPosition: BackdropIconPosition.none,
       actions: <Widget>[
-        BackdropToggleButton(
-          icon: AnimatedIcons.event_add,
+        GestureDetector(
+          onTap: () {
+            print('toggled');
+            name_cntr.clear();
+            no_cntr.clear();
+          },
+          child: BackdropToggleButton(
+            icon: AnimatedIcons.event_add,
+          ),
         ),
       ],
     );
@@ -202,68 +234,43 @@ class _MyHomePageState extends State<MyHomePage> {
       throw Exception('Failed to create card.');
     }
   }
+
+  void editCard(int id, String name, String number) async {
+    String url = 'http://10.0.2.2:8000/viewset/details/$id/';
+    Map<String, String> headers = {
+      'Content-Type': 'application/json',
+    };
+    String json = '{"name": "$name", "number": "$number"}';
+    final http.Response response =
+        await http.put(url, headers: headers, body: json);
+
+    if (response.statusCode == 200) {
+      print('Card edited successfully');
+      edit = false;
+      fetchCards();
+    } else {
+      throw Exception('Failed to edit card.');
+    }
+  }
+
+  void deleteCard(int id) async {
+    String url = 'http://10.0.2.2:8000/viewset/details/$id/';
+    Map<String, String> headers = {
+      'Content-Type': 'application/json',
+    };
+    final http.Response response = await http.delete(url, headers: headers);
+
+    if (response.statusCode == 204) {
+      print('Card deleted successfully');
+      fetchCards();
+    } else {
+      throw Exception('Failed to delete card.');
+    }
+  }
+
+  void tappedTile(String name, String number) {
+    name_cntr.text = name;
+    no_cntr.text = number;
+    edit = true;
+  }
 }
-
-//Column(
-//children: <Widget>[
-//TextField(
-//controller: tcntr,
-//onSubmitted: (text) {
-//litems.add(text);
-//tcntr.clear();
-//setState(() {});
-//},
-//),
-//Expanded(
-//child: ListView.builder(
-//itemCount: litems.length,
-//itemBuilder: (context, i) {
-//return ListTile(
-//title: Text(litems[i]),
-//subtitle: Text(litems[i]),
-//);
-//},
-//)),
-//],
-//)
-
-//scaffold
-//Scaffold(
-//floatingActionButton: FloatingActionButton(
-//child: Icon(Icons.refresh),
-//onPressed: () {
-//setState(() {
-//dataFetched = false;
-//});
-//fetchCards();
-//},
-//),
-//appBar: AppBar(
-//title: Text('Contact List'),
-//actions: <Widget>[
-//Padding(
-//padding: EdgeInsets.only(right: 20.0),
-//child: GestureDetector(
-//onTap: () {
-//Navigator.push(context,
-//MaterialPageRoute(builder: (context) => AddingScreen()));
-//},
-//child: Icon(Icons.add),
-//),
-//)
-//],
-//),
-//body: Center(
-//child: dataFetched == false
-//? CircularProgressIndicator()
-//    : ListView.builder(
-//itemCount: myModels.length,
-//itemBuilder: (context, i) {
-//return ListTile(
-//title: Text(myModels[i].name),
-//subtitle: Text(myModels[i].number),
-//);
-//},
-//),
-//),
-//)
