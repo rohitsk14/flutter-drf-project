@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:http/http.dart' as http;
 import 'package:contactlist/card.dart';
-import 'package:backdrop/backdrop.dart';
+import 'package:contactlist/backdrop.dart';
 
 void main() => runApp(MyApp());
 
@@ -18,7 +18,7 @@ class MyApp extends StatelessWidget {
         primaryIconTheme: IconThemeData(color: Colors.white),
         primaryColor: Colors.orangeAccent,
       ),
-      title: 'Flutter Demo',
+      title: 'Flutter-Api',
       home: MyHomePage(),
     );
   }
@@ -47,9 +47,21 @@ class _MyHomePageState extends State<MyHomePage> {
   @override
   Widget build(BuildContext context) {
     return BackdropScaffold(
-      title: Text(
-        'Contacts',
-        style: GoogleFonts.pacifico(color: Colors.white),
+      appBar: AppBar(
+        title: Text(
+          'Contacts',
+          style: GoogleFonts.pacifico(color: Colors.white),
+        ),
+        actions: <Widget>[
+          BackdropToggleButton(
+            onpressed: () {
+              edit = false;
+              name_cntr.clear();
+              no_cntr.clear();
+            },
+            icon: AnimatedIcons.event_add,
+          ),
+        ],
       ),
       backLayer: Container(
         decoration: BoxDecoration(color: Colors.white),
@@ -186,19 +198,6 @@ class _MyHomePageState extends State<MyHomePage> {
                 ),
         ),
       ),
-      iconPosition: BackdropIconPosition.none,
-      actions: <Widget>[
-        GestureDetector(
-          onTap: () {
-            print('toggled');
-            name_cntr.clear();
-            no_cntr.clear();
-          },
-          child: BackdropToggleButton(
-            icon: AnimatedIcons.event_add,
-          ),
-        ),
-      ],
     );
   }
 
