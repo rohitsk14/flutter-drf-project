@@ -6,7 +6,7 @@ defusedxml==0.6.0
 Django==2.2.2
 django-allauth==0.41.0
 djangorestframework==3.9.4
-httpie==1.0.2
+httpie==3.1.0
 idna==2.8
 isort==4.3.20
 lazy-object-proxy==1.4.1
